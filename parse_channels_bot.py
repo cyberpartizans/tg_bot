@@ -7,12 +7,9 @@ from threading import Thread, Lock
 from telethon.tl.functions.messages import GetHistoryRequest
 from telethon.tl.types import PeerChannel
 import asyncio
+import json
 
-offset_id = 0
-limit = 100
-all_messages = []
-total_messages = 0
-total_count_limit = 0
+from ner_analyze import analyze_message
 
 client_name = ""
 api_id = 0
@@ -27,28 +24,28 @@ with open("config.txt") as reader:
     phone_number = lines[3][:-1]
 
 client = TelegramClient(client_name, api_id, api_hash)
-client.start()
+client.start(phone_number)
 print("Client Created")
-# Ensure you're authorized
-if not client.is_user_authorized():
-    client.send_code_request(phone_number)
-    try:
-        client.sign_in(phone_number, input('Enter the code: '))
-    except SessionPasswordNeededError:
-        client.sign_in(password=input('Password: '))
 
-async def find_messages():
-    global offset_id
-    global total_messages
-    global limit
+all_messages = []
+
+@client.on(events.NewMessage)
+async def listen_new_messages(event):
     global all_messages
-    global total_count_limit
-    black_book = await client.get_entity("t.me/BlackBookBelarus")
+    chat = await event.get_input_chat()
+    entity = await client.get_entity(chat)
+    print(str(type(entity)))
+    if str(type(entity)) == "<class 'telethon.tl.types.Channel'>":
+        all_messages.append(event.message)
+
+async def collect_messages_from_channel(limit: int, offset: int, 
+    client: TelegramClient, telegram_channel):
+    global all_messages 
+    channel = await client.get_entity(telegram_channel)
     while True:
-        print("Current Offset ID is:", offset_id, "; Total Messages:", total_messages)
         history = await client(GetHistoryRequest(
-            peer=black_book,
-            offset_id=offset_id,
+            peer=channel,
+            offset_id=offset,
             offset_date=None,
             add_offset=0,
             limit=limit,
@@ -59,12 +56,36 @@ async def find_messages():
         if not history.messages:
             break
         messages = history.messages
-        print(f"Add new messages with len = {len(messages)}")
         for message in messages:
-            print(message)
-            all_messages.append(message.to_dict())
-        offset_id = messages[len(messages) - 1].id
-        total_messages = len(all_messages)
+            all_messages.append(message)
+        offset = messages[len(messages) - 1].id
+
+async def save_media(messages: list, client: TelegramClient, path: str, prefix: str = "image", limit: int = -1):
+    for i, message in enumerate(messages):
+        if limit != -1 and i < limit:
+            await client.download_media(message, f"{path}/{prefix}_{i}")
+
+def save_messages_json(messages: list, path: str):
+    result_dict = {}
+
+    for message in messages:
+        if "message" in message.to_dict().keys():
+            if len(result_dict) == 0:
+                result_dict.update(analyze_message(message.message))
+            else:
+                analyzed_keywords = analyze_message(message.message)
+                for key in analyzed_keywords.keys():
+                    if type(result_dict[key]) != list:
+                        key_list = []
+                        key_list.append(result_dict[key])
+                        result_dict[key] = key_list
+                    result_dict[key].append(analyzed_keywords[key])
+
+    with open(path, "w") as writer:
+        json.dump(result_dict, writer)
 
 with client:
-    client.loop.run_until_complete(find_messages())
+    client.loop.run_until_complete(collect_messages_from_channel(100, 0, client, "t.me/BlackBookBelarus"))
+    client.loop.run_until_complete(save_media(all_messages, client, "tmp", limit = 10))
+    save_messages_json(all_messages, "test.json")
+    client.run_until_disconnected()
