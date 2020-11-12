@@ -1,0 +1,15 @@
+# the current telebot requires this version
+requests==2.7.0
+telebot
+beautifulsoup4
+telethon
+mypy
+pendulum
+# for faster downloading of media with telethon
+# https://docs.telethon.dev/en/latest/modules/client.html#telethon.client.downloads.DownloadMethods.download_media
+cryptg
+# for narushitel.org
+selenium
+sqlalchemy
+GeoAlchemy2
+psycopg2

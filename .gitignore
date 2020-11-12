@@ -1,0 +1,17 @@
+config.txt
+*.pyc
+*.jpg
+*.mp4
+*.MP4
+*.gif
+*.bmp
+*.pcx
+*.png
+*.mov
+data/files/black_book/*
+*.session
+.idea
+.idea/*
+.mypy_cache
+.mypy_cache/*
+.DS_Store
