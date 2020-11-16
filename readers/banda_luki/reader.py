@@ -21,7 +21,8 @@ class Reader:
         :return:
         """
         return self.all_items
-    
+
+    # TODO - in progress
     async def get_person_details(self, url):
         url = 'https://bandaluki.info/bandits/shabunya-viktoryya-valeryevna/'
         self.browser.get(url)
@@ -79,44 +80,11 @@ class Reader:
 
         print("\n STRONGS OUT ", strongs_out)
 
-        # details_in_text = notes.findChildren("strong")
-        # # print("\n\n details in text  ", details_in_text)
-        # details_out = []
-        # for detail in details_in_text:
-        #     det_name = detail.get_text().strip()
-        #     det_parent_text = str(detail.parent)
-        #     query = r"%s\s*</strong>(.+)<" % det_name
-        #     print("\n DETAIL ", det_name, det_parent_text)
-        #     # print("\n QUERY ", query, det_parent_text)
-        #     det_same_line = re.search(query, det_parent_text)
-        #     # detail - value pair is in the same line
-        #     if det_same_line and det_same_line.groups()[0].strip() != '':
-        #         # print("\n SAME LINE ", det_same_line.groups(),  "::", det_same_line.group())
-        #         details_out.append((det_name, det_same_line.groups()[0].strip()))
-        #     else:  # detail is a header of a block, value is the block's content
-        #         next = detail.find_next('p')
-        #         print("\n\n NEXT ", next)
-        #         print("\n\n NEXT SIBLING ", detail.next_sibling)
-        #
-        #
-        #
-        # print("\n\n DETAILS OUT ", details_out)
-
-            # print("\n\nDETAIL ", det_name, "SAME LINE ", det_same_line)
-            # print("\n\n blah ", det_same_line)
-            # det_same_line = re.search(r"" + det_name + "</strong>(.+?)<br />", detail)
-            # print("\n\n DETAIL ", det_name, "::", det_same_line)
-            # print("\n DETAIL", detail.__class__, detail, "\ntext: ",detail.get_text(), "\n::::", detail.parent)
-
-
-
         for img in images:
             personal_data_out["images"].append((
                 img["src"],
                 img["srcset"]
             ))
-
-
 
         # print("\n\n NOTES ", notes)
         # print("\n IMAGES ", images)
